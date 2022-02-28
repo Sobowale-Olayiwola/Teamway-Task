@@ -19,7 +19,13 @@ const updateSchema = Joi.object({
     shiftHours: Joi.string().label('Shift Hours').valid('0-8', '8-16', '16-24'),
 });
 
+const loginSchema = Joi.object({
+    email: Joi.string().email().required().label('Email'),
+    password: Joi.string().min(6).max(16).required().label('Password'),
+});
+
 module.exports = {
+    loginSchema,
     createSchema,
     updateSchema,
 };
