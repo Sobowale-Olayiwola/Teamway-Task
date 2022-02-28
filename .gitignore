@@ -1,0 +1,14 @@
+# Logs and coverage
+.nyc_output/
+coverage/
+logs/
+
+# Documentation
+docs/
+
+# Project properties folders and file
+.env
+yarn.lock
+package-lock.json
+node_modules/
+.vscode/

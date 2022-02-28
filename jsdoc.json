@@ -1,0 +1,17 @@
+{
+    "source": {
+        "include": ["src"],
+        "includePattern": ".js$",
+        "excludePattern": "(node_modules/|docs/|.nyc_output/|coverage/|logs)"
+    },
+    "plugins": ["plugins/markdown"],
+    "templates":{
+        "cleverLinks": true,
+        "monospaceLinks": true
+    },
+    "opts": {
+        "recurse": true,
+        "destination": "./docs/",
+        "template": "docs-tplt"
+    }
+}
