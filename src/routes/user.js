@@ -7,6 +7,7 @@ const router = require('express').Router();
 
 const { Logger } = require('../utilities/logger');
 const UserService = require('../services/user/user');
+const { verifyInputToken } = require('../middlewares/permissions');
 
 const userService = new UserService();
 
@@ -16,7 +17,11 @@ try {
             request.payload = await userService.createRecord({ request, next });
             next();
         })
-        .put('/start-shift', async (request, response, next) => {
+        .post('/login', async (request, response, next) => {
+            request.payload = await userService.loginUser({ request, next });
+            next();
+        })
+        .put('/period/start-shift', verifyInputToken, async (request, response, next) => {
             request.payload = await userService.startShift({ request, next });
             next();
         })
@@ -28,7 +33,7 @@ try {
             request.payload = await userService.readRecordById({ request, next });
             next();
         })
-        .get('/filter', async (request, response, next) => {
+        .get('/filter/user-records', async (request, response, next) => {
             request.payload = await userService.readRecordsByFilter({ request, next });
             next();
         })
