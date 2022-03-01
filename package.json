@@ -14,6 +14,7 @@
         "url": "git+https://github.com/noguntuberu/node-template.git"
     },
     "dependencies": {
+        "@hapi/joi": "^17.1.1",
         "bcrypt": "^5.0.1",
         "body-parser": "^1.19.2",
         "compression": "^1.7.4",
@@ -25,8 +26,8 @@
         "handlebars": "^4.7.7",
         "helmet": "^5.0.2",
         "hpp": "^0.2.3",
-        "@hapi/joi": "^17.1.1",
         "jsonwebtoken": "^8.5.1",
+        "mockdate": "^3.0.5",
         "mongoose": "^6.2.2",
         "morgan": "^1.10.0",
         "multer": "^1.4.2",
@@ -65,6 +66,8 @@
         "dev": "nodemon -r dotenv/config index.js",
         "test": "nyc mocha --recursive -w -c || true",
         "test-publish": "nyc --reporter=html mocha --recursive -w -c || true",
+        "test:browser": "live-server --port=9000 --mount=/:public",
+        "test:coverage": "nyc --reporter=html --check-coverage=true mocha --recursive -c || true",
         "update-example-env": "run-script-os",
         "update-example-env:darwin:linux": "cp .env .env.example",
         "update-example-env:win32": "robocopy .env .env.example",
