@@ -52,6 +52,10 @@ const UserSchema = new Schema({
         required: true,
         unique: true,
     },
+    password: {
+        type: String,
+        required: true,
+    },
     shiftHours: {
         type: String,
         enum: ['0-8', '8-16', '16-24'],
@@ -61,6 +65,9 @@ const UserSchema = new Schema({
     },
     shiftEndTime: {
         type: Number,
+    },
+    shiftStartDate: {
+        type: Date,
     },
 });
 
