@@ -6,7 +6,7 @@
 
 const RootService = require('../_root');
 const { buildQuery, buildWildcardOptions } = require('../../utilities/query');
-const { createSchema, updateSchema, loginSchema } = require('../../validators/user');
+const { createSchema, updateSchema, loginSchema, shiftSchema } = require('../../validators/user');
 
 /**
  *
@@ -44,7 +44,7 @@ class UserService extends RootService {
 
             const { error } = createSchema.validate(body);
             if (error) throw new CustomValidationError(this.filterJOIValidation(error.message));
-
+            body.password = await hashObject(body.password);
             const result = await this.userController.createRecord({ ...body });
             if (result && result.failed) throw new CustomControllerError(result.error);
             return this.processSingleRead(result);
@@ -92,11 +92,24 @@ class UserService extends RootService {
             return next(processedError);
         }
     }
-
+    getShiftHoursAndDate(body) {
+        const { error } = shiftSchema.validate(body);
+        if (error) throw new CustomValidationError(this.filterJOIValidation(error.message));
+        const { shiftHours } = body;
+        let range = shiftHours.split('-');
+        const shiftStartTime = range[0];
+        const shiftEndTime = range[1];
+        const shiftStartDate = new Date();
+        return {
+            shiftEndTime,
+            shiftStartTime,
+            shiftStartDate,
+        };
+    }
     /**
      * This method is an implementation to handle the business logic
-     *  of Reading existing records from the database without filter.
-     * This should be used alongside a GET Request alone.
+     *  of creating shift period for a particular user.
+     * This should be used alongside a PUT Request alone.
      * @async
      * @method
      * @param {RequestFunctionParameter} {@link RequestFunctionParameter}
@@ -104,16 +117,64 @@ class UserService extends RootService {
      */
     async startShift({ request, next }) {
         try {
-            const filter = { conditions: {} };
-            const result = await this.userController.readRecords(filter);
-            if (result && result.failed) throw new CustomControllerError(result.error);
+            const filter = { conditions: { id: request.userId } };
+            const user = await this.userController.readRecords(filter);
+            if (user && user.failed) throw new CustomControllerError(user.error);
+            if (user[0].shiftStartDate) {
+                const shiftStartDate = new Date(`${user[0].shiftStartDate}`);
+                const today = new Date();
+                if (
+                    shiftStartDate.getDate() === today.getDate() &&
+                    today.getHours() !== 0 &&
+                    user[0].shiftEndTime < today.getHours()
+                ) {
+                    throw new Error(
+                        `Shift for today held within ${user[0].shiftStartTime}-${user[0].shiftEndTime} hours`
+                    );
+                } else if (
+                    shiftStartDate.getDate() === today.getDate() &&
+                    today.getHours() !== 0 &&
+                    user[0].shiftEndTime > today.getHours()
+                ) {
+                    throw new Error(
+                        `Shift for today is within ${user[0].shiftStartTime}-${user[0].shiftEndTime} hours`
+                    );
+                } else if (
+                    shiftStartDate.getDate() === today.getDate() &&
+                    today.getHours() === 0 &&
+                    user[0].shiftEndTime > today.getHours()
+                ) {
+                    throw new Error(
+                        `Shift for today is within ${user[0].shiftStartTime}-${user[0].shiftEndTime} hours`
+                    );
+                } else {
+                    const { shiftEndTime, shiftStartTime, shiftStartDate } =
+                        this.getShiftHoursAndDate(request.body);
+                    const result = await this.userController.updateRecords({
+                        conditions: { id: request.userId, isActive: true, isDeleted: false },
+                        data: { shiftEndTime, shiftStartTime, shiftStartDate },
+                    });
+                    if (result && result.failed) throw new CustomControllerError(result.error);
 
-            return this.processMultipleReadResults(result);
+                    return this.processUpdateResult({ result });
+                }
+            } else {
+                const { shiftEndTime, shiftStartTime, shiftStartDate } = this.getShiftHoursAndDate(
+                    request.body
+                );
+                const result = await this.userController.updateRecords({
+                    conditions: { id: request.userId },
+                    data: { shiftEndTime, shiftStartTime, shiftStartDate },
+                });
+                if (result && result.failed) throw new CustomControllerError(result.error);
+
+                return this.processUpdateResult({ result });
+            }
         } catch (e) {
             const processedError = this.formatError({
                 service: this.serviceName,
                 error: e,
-                functionName: 'readRecordsByFilter',
+                functionName: 'startShift',
             });
 
             return next(processedError);
@@ -270,7 +331,7 @@ class UserService extends RootService {
             }
             const { error } = updateSchema.validate(body);
             if (error) throw new CustomValidationError(this.filterJOIValidation(error.message));
-
+            body.password ? hashObject(body.password) : body;
             const result = await this.userController.updateRecords({
                 conditions: { id, isActive: true, isDeleted: false },
                 data: body,
