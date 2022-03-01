@@ -66,7 +66,6 @@
     "scripts": {
         "dev": "nodemon -r dotenv/config index.js",
         "test": "nyc mocha --recursive -w -c || true",
-        "test-publish": "nyc --reporter=html mocha --recursive -w -c || true",
         "test:browser": "live-server --port=9000 --mount=/:public",
         "test:coverage": "nyc --reporter=html --check-coverage=true mocha --recursive -c || true",
         "update-example-env": "run-script-os",
